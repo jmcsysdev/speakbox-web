@@ -2,123 +2,205 @@
 // src/pages/cuenta.astro
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
-
+ 
 <BaseLayout title="Mi cuenta" activePage="cuenta">
-
+ 
   <div class="page-wrap no-sub">
     <div class="auth-wrap">
       <div class="auth-card">
-
+ 
         <div class="auth-card-head">
           <h2>Mi cuenta</h2>
           <p>Accede o crea tu perfil SpeakBox</p>
         </div>
-
+ 
         <div class="auth-card-body">
-
-          <!-- Tabs login / registro -->
-          <div class="auth-tabs" style="display: flex; gap: 20px; border-bottom: 1px solid var(--ln); margin-bottom: 20px;">
-            <div class="auth-tab active" id="tab-login" style="cursor: pointer; padding: 10px 0;" onclick="switchTab('login')">
-              Iniciar sesión
-            </div>
-            <div class="auth-tab" id="tab-registro" style="cursor: pointer; padding: 10px 0;" onclick="switchTab('registro')">
-              Registrarse
-            </div>
+ 
+          <!-- Tabs -->
+          <div class="auth-tabs" style="display:flex;gap:20px;border-bottom:1px solid var(--ln);margin-bottom:20px;">
+            <div class="auth-tab active" id="tab-login"
+              style="cursor:pointer;padding:10px 0;border-bottom:2px solid var(--gr);"
+              onclick="switchTab('login')">Iniciar sesión</div>
+            <div class="auth-tab" id="tab-registro"
+              style="cursor:pointer;padding:10px 0;"
+              onclick="switchTab('registro')">Registrarse</div>
           </div>
-
-          <!-- ══ FORMULARIO LOGIN ═══════════════════════════════════ -->
-          <div id="form-login" style="display: block;">
-            <div id="login-error" class="alert alert-err" style="display:none; padding: 10px; background: #fee; color: #c00; margin-bottom: 10px;">
+ 
+          <!-- ══ LOGIN ══════════════════════════════════════════ -->
+          <div id="form-login" style="display:block;">
+            <div id="login-error" style="display:none;padding:10px;background:#fee;color:#c00;border-radius:6px;margin-bottom:12px;font-size:13px;">
               <span id="login-error-msg">Correo o contraseña incorrectos.</span>
             </div>
-            <div class="form-field" style="margin-bottom: 15px;">
+            <div class="form-field" style="margin-bottom:15px;">
               <label>Correo institucional</label>
-              <input type="email" id="login-email" placeholder="20200012@unmsm.edu.pe" style="width: 100%; padding: 8px;" />
+              <input type="email" id="login-email" placeholder="20200012@unmsm.edu.pe" style="width:100%;padding:8px;" />
             </div>
-            <div class="form-field" style="margin-bottom: 15px;">
+            <div class="form-field" style="margin-bottom:15px;">
               <label>Contraseña</label>
-              <input type="password" id="login-pass" placeholder="••••••••" style="width: 100%; padding: 8px;" />
+              <input type="password" id="login-pass" placeholder="••••••••" style="width:100%;padding:8px;" />
             </div>
-            <button class="btn btn-primary btn-full" onclick="doLogin()" style="width: 100%; padding: 10px; cursor: pointer;">Ingresar</button>
+            <button class="btn btn-primary btn-full" id="login-btn"
+              onclick="doLogin()" style="width:100%;padding:10px;cursor:pointer;">
+              Ingresar
+            </button>
+            <p style="margin-top:14px;font-size:13px;color:var(--tx2);text-align:center;">
+              ¿No tienes cuenta? <span style="color:var(--gr);cursor:pointer;" onclick="switchTab('registro')">Regístrate aquí</span>
+            </p>
           </div>
-
-          <!-- ══ FORMULARIO REGISTRO ════════════════════════════════ -->
-          <div id="form-registro" style="display: none;">
-            <div id="reg-error" class="alert alert-err" style="display:none; padding: 10px; background: #fee; color: #c00; margin-bottom: 10px;">
+ 
+          <!-- ══ REGISTRO ════════════════════════════════════════ -->
+          <div id="form-registro" style="display:none;">
+            <div id="reg-error" style="display:none;padding:10px;background:#fee;color:#c00;border-radius:6px;margin-bottom:12px;font-size:13px;">
               <span id="reg-error-msg">Por favor completa todos los campos.</span>
             </div>
-
-            <div class="form-field" style="margin-bottom: 15px;">
+            <div id="reg-ok" style="display:none;padding:10px;background:#efe;color:#060;border-radius:6px;margin-bottom:12px;font-size:13px;">
+              ✅ Cuenta creada. Ahora inicia sesión.
+            </div>
+ 
+            <div class="form-field" style="margin-bottom:15px;">
               <label>Nombre completo</label>
-              <input type="text" id="reg-nombre" placeholder="Ana García Torres" style="width: 100%; padding: 8px;" />
+              <input type="text" id="reg-nombre" placeholder="Ana García Torres" style="width:100%;padding:8px;" />
             </div>
-            <div class="form-field" style="margin-bottom: 15px;">
+            <div class="form-field" style="margin-bottom:15px;">
+              <label>Nombre de usuario <span style="font-size:11px;color:var(--tx3)">(este aparecerá en el saludo)</span></label>
+              <input type="text" id="reg-username" placeholder="ana_garcia" style="width:100%;padding:8px;" />
+            </div>
+            <div class="form-field" style="margin-bottom:15px;">
               <label>Correo institucional</label>
-              <input type="email" id="reg-email" placeholder="20200012@unmsm.edu.pe" style="width: 100%; padding: 8px;" />
+              <input type="email" id="reg-email" placeholder="20200012@unmsm.edu.pe" style="width:100%;padding:8px;" />
             </div>
-            <div class="form-field" style="margin-bottom: 15px;">
+            <div class="form-field" style="margin-bottom:15px;">
               <label>Contraseña</label>
-              <input type="password" id="reg-pass" placeholder="Mínimo 8 caracteres" style="width: 100%; padding: 8px;" />
+              <input type="password" id="reg-pass" placeholder="Mínimo 8 caracteres" style="width:100%;padding:8px;" />
             </div>
-
-            <button class="btn btn-primary btn-full" onclick="doRegistro()" style="width: 100%; padding: 10px; cursor: pointer;">Crear cuenta</button>
+ 
+            <button class="btn btn-primary btn-full" id="reg-btn"
+              onclick="doRegistro()" style="width:100%;padding:10px;cursor:pointer;">
+              Crear cuenta
+            </button>
+            <p style="margin-top:14px;font-size:13px;color:var(--tx2);text-align:center;">
+              ¿Ya tienes cuenta? <span style="color:var(--gr);cursor:pointer;" onclick="switchTab('login')">Inicia sesión</span>
+            </p>
           </div>
-
+ 
         </div>
       </div>
     </div>
   </div>
-
+ 
 </BaseLayout>
-
+ 
 <script is:inline>
-  // Función para alternar pestañas
+  const API = "https://speakbox-backend-production.up.railway.app";
+ 
   function switchTab(tab) {
-    const loginForm = document.getElementById('form-login');
-    const regForm = document.getElementById('form-registro');
-    const tabLogin = document.getElementById('tab-login');
-    const tabReg = document.getElementById('tab-registro');
-
-    if (tab === 'login') {
-      loginForm.style.display = 'block';
-      regForm.style.display = 'none';
-      tabLogin.style.borderBottom = '2px solid var(--gr)';
-      tabReg.style.borderBottom = 'none';
-    } else {
-      loginForm.style.display = 'none';
-      regForm.style.display = 'block';
-      tabLogin.style.borderBottom = 'none';
-      tabReg.style.borderBottom = '2px solid var(--gr)';
-    }
+    const isLogin = tab === 'login';
+    document.getElementById('form-login').style.display    = isLogin ? 'block' : 'none';
+    document.getElementById('form-registro').style.display = isLogin ? 'none'  : 'block';
+    document.getElementById('tab-login').style.borderBottom    = isLogin ? '2px solid var(--gr)' : 'none';
+    document.getElementById('tab-registro').style.borderBottom = isLogin ? 'none' : '2px solid var(--gr)';
   }
-
-  // Lógica Login
+ 
+  // ── LOGIN ──────────────────────────────────────────────────────
   async function doLogin() {
-    const email = document.getElementById('login-email').value;
-    const pass = document.getElementById('login-pass').value;
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-pass').value;
+    const errBox = document.getElementById('login-error');
+    const errMsg = document.getElementById('login-error-msg');
+ 
     if (!email || !pass) {
-      document.getElementById('login-error').style.display = 'block';
+      errMsg.textContent = 'Completa todos los campos.';
+      errBox.style.display = 'block';
       return;
     }
-    // Guarda el email para recuperar el nombre desde el backend
-    sessionStorage.setItem('sb_email', email);
-    // Nombre temporal mientras carga (parte antes del @)
-    sessionStorage.setItem('sb_nombre', email.split('@')[0]);
-    window.location.href = '/dashboard';
+ 
+    document.getElementById('login-btn').textContent = 'Ingresando...';
+ 
+    try {
+      const res = await fetch(`${API}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+      const data = await res.json();
+ 
+      if (!res.ok) {
+        errMsg.textContent = data.detail || 'Correo o contraseña incorrectos.';
+        errBox.style.display = 'block';
+        document.getElementById('login-btn').textContent = 'Ingresar';
+        return;
+      }
+ 
+      // Guardar datos del usuario en sessionStorage
+      sessionStorage.setItem('sb_user_id',  data.usuario.id);
+      sessionStorage.setItem('sb_username', data.usuario.username);
+      sessionStorage.setItem('sb_nombre',   data.usuario.nombre);
+      sessionStorage.setItem('sb_email',    data.usuario.email);
+ 
+      window.location.href = '/dashboard';
+ 
+    } catch (e) {
+      errMsg.textContent = 'Error de conexión con el servidor.';
+      errBox.style.display = 'block';
+      document.getElementById('login-btn').textContent = 'Ingresar';
+    }
   }
-
-  // Lógica Registro
+ 
+  // ── REGISTRO ───────────────────────────────────────────────────
   async function doRegistro() {
-    const nombre = document.getElementById('reg-nombre').value;
-    const email = document.getElementById('reg-email').value;
-    const pass = document.getElementById('reg-pass').value;
-    if (!nombre || !email || !pass) {
-      document.getElementById('reg-error').style.display = 'block';
+    const nombre   = document.getElementById('reg-nombre').value.trim();
+    const username = document.getElementById('reg-username').value.trim();
+    const email    = document.getElementById('reg-email').value.trim();
+    const pass     = document.getElementById('reg-pass').value;
+    const errBox   = document.getElementById('reg-error');
+    const errMsg   = document.getElementById('reg-error-msg');
+    const okBox    = document.getElementById('reg-ok');
+ 
+    errBox.style.display = 'none';
+    okBox.style.display  = 'none';
+ 
+    if (!nombre || !username || !email || !pass) {
+      errMsg.textContent = 'Completa todos los campos.';
+      errBox.style.display = 'block';
       return;
     }
-    // Guarda el nombre COMPLETO (ej: "Ana García")
-    sessionStorage.setItem('sb_nombre', nombre);
-    sessionStorage.setItem('sb_email', email);
-    window.location.href = '/dashboard';
+    if (pass.length < 8) {
+      errMsg.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+      errBox.style.display = 'block';
+      return;
+    }
+ 
+    document.getElementById('reg-btn').textContent = 'Creando cuenta...';
+ 
+    try {
+      const res = await fetch(`${API}/api/registro`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, nombre, email, password: pass })
+      });
+      const data = await res.json();
+ 
+      if (!res.ok) {
+        errMsg.textContent = data.detail || 'Error al crear la cuenta.';
+        errBox.style.display = 'block';
+        document.getElementById('reg-btn').textContent = 'Crear cuenta';
+        return;
+      }
+ 
+      // Registro exitoso → mostrar mensaje y cambiar a login
+      okBox.style.display = 'block';
+      document.getElementById('reg-btn').textContent = 'Crear cuenta';
+ 
+      // Prellenar el email en el login y cambiar de tab
+      setTimeout(() => {
+        document.getElementById('login-email').value = email;
+        switchTab('login');
+      }, 1500);
+ 
+    } catch (e) {
+      errMsg.textContent = 'Error de conexión con el servidor.';
+      errBox.style.display = 'block';
+      document.getElementById('reg-btn').textContent = 'Crear cuenta';
+    }
   }
 </script>
