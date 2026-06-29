@@ -1,0 +1,249 @@
+---
+// src/pages/sesiones.astro
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Historial" activePage="sesiones">
+
+  <div class="subnav">
+    <a href="#" id="sub-todo"        class="active" onclick="filtrarModo('todo')">Todas</a>
+    <div class="subnav-sep"></div>
+    <a href="#" id="sub-feynman"     onclick="filtrarModo('feynman')">Feynman</a>
+    <div class="subnav-sep"></div>
+    <a href="#" id="sub-pomodoro"    onclick="filtrarModo('pomodoro')">Pomodoro</a>
+    <div class="subnav-sep"></div>
+    <a href="#" id="sub-respiracion" onclick="filtrarModo('respiracion')">Respiración</a>
+  </div>
+
+  <div class="page-wrap">
+    <div class="container section">
+
+      <h2 style="font-family:'DM Serif Display',Georgia,serif;font-size:28px;margin-bottom:4px">
+        Historial de sesiones
+      </h2>
+      <p style="font-size:13.5px;color:var(--tx2)">
+        Todas las interacciones registradas por tu SpeakBox
+      </p>
+
+      <div class="filtros">
+        <button class="filtro-btn active" id="fb-todo"        onclick="filtrarModo('todo')">Todos</button>
+        <button class="filtro-btn"        id="fb-feynman"     onclick="filtrarModo('feynman')">🧠 Feynman</button>
+        <button class="filtro-btn"        id="fb-pomodoro"    onclick="filtrarModo('pomodoro')">🍅 Pomodoro</button>
+        <button class="filtro-btn"        id="fb-respiracion" onclick="filtrarModo('respiracion')">🌬️ Respiración</button>
+        <div class="filtro-sep"></div>
+        <div class="busqueda">
+          <input type="text" placeholder="Buscar tema..." oninput="filtrarBusqueda(this.value)" />
+        </div>
+      </div>
+
+      <div class="tabla-hist" id="tabla-hist">
+        <div class="empty">
+          <div class="empty-icon">⏳</div>
+          <h3>Cargando historial...</h3>
+          <p>Sincronizando con la base de datos.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span class="footer-brand">SpeakBox</span>
+        <span>© 2026 Laboratorio de Telecomunicaciones · UNMSM</span>
+      </div>
+    </footer>
+  </div>
+
+  <div class="modal-overlay" id="modal-ses" onclick="if(event.target===this)cerrarModal()">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h3 id="modal-titulo"></h3>
+          <p style="font-size:12px;color:var(--tx3);margin-top:4px" id="modal-meta"></p>
+        </div>
+        <button class="modal-close" onclick="cerrarModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label>Nivel de comprensión</label>
+          <span class="nivel-badge" id="modal-nivel"></span>
+        </div>
+        <div class="modal-field">
+          <label>Lo que explicaste</label>
+          <div class="transcript-box" id="modal-transcript"></div>
+        </div>
+        <div class="modal-field">
+          <label>Respuesta del SpeakBox</label>
+          <p id="modal-resp"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</BaseLayout>
+
+<script>
+  // ── Constantes y Variables Globales ──────────────────────────────
+  const API_BASE = "https://speakbox-backend-production.up.railway.app";
+  let SESIONES = []; // Inicia vacío, se llenará con la API
+
+  const MODO_LABEL = {
+    feynman:    '🧠 Feynman',
+    pomodoro:   '🍅 Pomodoro',
+    respiracion:'🌬️ Resp.'
+  };
+
+  const MODO_LABEL_LONG = {
+    feynman:    'Feynman 🧠',
+    pomodoro:   'Pomodoro 🍅',
+    respiracion:'Respiración 🌬️'
+  };
+
+  let modoActual = 'todo';
+
+  // ── Fetch a la API real ──────────────────────────────────────────
+  async function cargarSesiones() {
+    try {
+      const res = await fetch(`${API_BASE}/api/sesiones`);
+      const data = await res.json();
+
+      if (data.sesiones && data.sesiones.length > 0) {
+        SESIONES = data.sesiones.map(dbRow => {
+          // Formatear la fecha
+          const fechaObj = new Date(dbRow.fecha);
+          const fechaStr = fechaObj.toLocaleString('es-PE', { 
+            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
+          });
+
+          // Extraer un "tema" basado en las primeras palabras de la transcripción
+          const palabras = dbRow.transcripcion.split(' ');
+          const temaGenerado = palabras.slice(0, 6).join(' ') + (palabras.length > 6 ? '...' : '');
+
+          return {
+            tema: temaGenerado,
+            modo: 'feynman', // Tu API actual guarda Feynman. Aquí luego podrás leerlo dinámicamente.
+            dur: Math.ceil(dbRow.duracion_seg / 60) + ' min',
+            nivel: '—', 
+            nClass: 'medio',
+            fecha: fechaStr,
+            transcript: dbRow.transcripcion,
+            resp: dbRow.respuesta_ia
+          };
+        });
+      }
+    } catch (error) {
+      console.error("Error al conectar con la base de datos:", error);
+      document.getElementById('tabla-hist').innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">⚠️</div>
+          <h3>Error de conexión</h3>
+          <p>No se pudo cargar el historial desde el servidor.</p>
+        </div>`;
+      return;
+    }
+
+    // Una vez cargados los datos, aplicamos filtros de URL o renderizamos normal
+    const params = new URLSearchParams(window.location.search);
+    const modo = params.get('modo');
+    if (modo && ['feynman','pomodoro','respiracion'].includes(modo)) {
+      filtrarModo(modo);
+    } else {
+      renderTabla(modoActual, '');
+    }
+  }
+
+  // ── Filtros ──────────────────────────────────────────────────────
+  function filtrarModo(modo) {
+    modoActual = modo;
+    ['todo','feynman','pomodoro','respiracion'].forEach(m => {
+      document.getElementById('fb-' + m)?.classList.toggle('active', m === modo);
+      document.getElementById('sub-' + m)?.classList.toggle('active', m === modo);
+    });
+    const input = document.querySelector('.busqueda input');
+    renderTabla(modo, input ? input.value : '');
+  }
+
+  function filtrarBusqueda(q) {
+    renderTabla(modoActual, q);
+  }
+
+  // ── Renderizar tabla ─────────────────────────────────────────────
+  function renderTabla(modo, busqueda) {
+    const cont = document.getElementById('tabla-hist');
+    if (!cont) return;
+
+    const filtradas = SESIONES
+      .filter(s => modo === 'todo' || s.modo === modo)
+      .filter(s => s.tema.toLowerCase().includes(busqueda.toLowerCase()));
+
+    const head = `
+      <div class="tabla-hist-head">
+        <span>Tema / descripción</span>
+        <span>Modo</span>
+        <span>Duración</span>
+        <span>Nivel</span>
+        <span>Fecha</span>
+      </div>`;
+
+    if (filtradas.length === 0) {
+      cont.innerHTML = head + `
+        <div class="empty">
+          <div class="empty-icon">📭</div>
+          <h3>Sin sesiones</h3>
+          <p>No hay registros para este filtro.</p>
+        </div>`;
+      return;
+    }
+
+    cont.innerHTML = head + filtradas.map((s, i) => `
+      <div class="tabla-hist-row" data-idx="${i}" style="cursor:pointer">
+        <span class="row-tema">${s.tema}</span>
+        <span class="row-modo">
+          <span class="modo-${s.modo}">${MODO_LABEL[s.modo] || s.modo}</span>
+        </span>
+        <span class="row-dur">${s.dur}</span>
+        <span>
+          ${s.nivel !== '—'
+            ? `<span class="nivel-badge nivel-${s.nClass}">${s.nivel}</span>`
+            : `<span style="color:var(--tx3)">—</span>`}
+        </span>
+        <span class="row-fecha">${s.fecha}</span>
+      </div>`).join('');
+
+    // Asignar eventos click después de renderizar para abrir el modal
+    cont.querySelectorAll('.tabla-hist-row[data-idx]').forEach(row => {
+      row.addEventListener('click', () => {
+        const s = filtradas[parseInt(row.dataset.idx)];
+        abrirModal(s);
+      });
+    });
+  }
+
+  // ── Modal ────────────────────────────────────────────────────────
+  function abrirModal(s) {
+    document.getElementById('modal-titulo').textContent     = s.tema;
+    document.getElementById('modal-meta').textContent       = `${MODO_LABEL_LONG[s.modo] || s.modo} · ${s.dur} · ${s.fecha}`;
+    document.getElementById('modal-transcript').textContent = s.transcript;
+    document.getElementById('modal-resp').textContent       = s.resp;
+
+    const nb = document.getElementById('modal-nivel');
+    nb.textContent = s.nivel;
+    nb.className   = `nivel-badge nivel-${s.nClass || 'medio'}`;
+
+    document.getElementById('modal-ses').classList.add('open');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-ses').classList.remove('open');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') cerrarModal();
+  });
+
+  // ── Arrancar ─────────────────────────────────────────────────────
+  // Iniciamos la carga de datos tan pronto como el DOM esté listo
+  window.addEventListener('DOMContentLoaded', () => {
+    cargarSesiones();
+  });
+</script>
