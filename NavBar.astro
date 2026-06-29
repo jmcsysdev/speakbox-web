@@ -1,0 +1,123 @@
+---
+// src/components/NavBar.astro
+const { activePage } = Astro.props;
+---
+
+<style>
+  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: var(--nav-h); background: var(--b); border-bottom: 1px solid var(--ln); display: flex; align-items: center; padding: 0 32px; }
+  .nav-brand { font-family: 'DM Serif Display', Georgia, serif; font-size: 19px; letter-spacing: -.01em; color: var(--tx); text-decoration: none; margin-right: 36px; }
+  .nav-links { display: flex; list-style: none; flex: 1; }
+  .nav-links li { position: relative; }
+  .nav-links a { display: flex; align-items: center; gap: 5px; color: var(--tx2); text-decoration: none; font-size: 13.5px; font-weight: 500; padding: 0 14px; height: var(--nav-h); transition: color .15s; white-space: nowrap; }
+  .nav-links a:hover, .nav-links a.active { color: var(--tx); }
+  .nav-links a.active { border-bottom: 2px solid var(--gr); }
+  .nav-chevron { font-size: 10px; opacity: .5; transition: transform .2s; }
+  .nav-links li:hover .dropdown { display: block; }
+  .nav-links li:hover .nav-chevron { transform: rotate(180deg); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .nav-role-badge { font-size: 11px; font-family: 'JetBrains Mono', monospace; background: var(--grl); color: var(--gr); padding: 3px 9px; border-radius: 20px; font-weight: 500; }
+</style>
+
+<nav class="nav">
+  <a class="nav-brand" href="/dashboard">SpeakBox</a>
+  <ul class="nav-links">
+
+    <li>
+      <a href="/dashboard" class={activePage === 'dashboard' ? 'active' : ''}>Dashboard</a>
+    </li>
+
+    <li>
+      <a href="/dispositivo" class={activePage === 'dispositivo' ? 'active' : ''}>
+        Dispositivo <span class="nav-chevron">▾</span>
+      </a>
+      <div class="dropdown">
+        <div class="dropdown-label">Telemetría</div>
+        <a href="/dispositivo#estado">Estado en vivo</a>
+        <a href="/dispositivo#bateria">Batería</a>
+        <a href="/dispositivo#sensores">Sensores</a>
+      </div>
+    </li>
+
+    <li>
+      <a href="/sesiones" class={activePage === 'sesiones' ? 'active' : ''}>
+        Historial <span class="nav-chevron">▾</span>
+      </a>
+      <div class="dropdown">
+        <div class="dropdown-label">Filtrar por modo</div>
+        <a href="/sesiones">Todas las sesiones</a>
+        <a href="/sesiones?modo=feynman">🧠 Feynman</a>
+        <a href="/sesiones?modo=pomodoro">🍅 Pomodoro</a>
+        <a href="/sesiones?modo=respiracion">🌬️ Respiración</a>
+        <div class="dropdown-sep"></div>
+        <a href="#" id="nav-export-csv">Exportar CSV</a>
+      </div>
+    </li>
+
+    <li id="nav-docente-li" style="display:none">
+      <a href="/docente" class={activePage === 'docente' ? 'active' : ''}>
+        Vista Docente <span class="nav-chevron">▾</span>
+      </a>
+      <div class="dropdown">
+        <div class="dropdown-label">Panel</div>
+        <a href="/docente">Mis alumnos</a>
+        <a href="/docente#comparativa">Comparativa semanal</a>
+        <a href="/docente#alertas">Alertas de batería</a>
+      </div>
+    </li>
+
+  </ul>
+  <div class="nav-right">
+    <span class="nav-role-badge" id="role-badge">Estudiante</span>
+    <a href="/cuenta" class="btn btn-ghost btn-sm" style="text-decoration:none">Mi cuenta</a>
+    <button class="btn btn-primary btn-sm" id="connect-btn">Conectar</button>
+  </div>
+</nav>
+
+<script>
+  // ── Leer rol guardado en sessionStorage ──────────────────────────
+  const rol = sessionStorage.getItem('sb_rol') || 'estudiante';
+
+  const badge = document.getElementById('role-badge');
+  if (badge) {
+    badge.textContent = rol === 'docente' ? 'Docente' : 'Estudiante';
+  }
+
+  if (rol === 'docente') {
+    const li = document.getElementById('nav-docente-li');
+    if (li) li.style.display = '';
+  }
+
+  // ── Botón conectar/desconectar con PERSISTENCIA ───────────────────
+  const btn = document.getElementById('connect-btn');
+
+  if (btn) {
+    // 1. Cargar el estado guardado al inicializar la página
+    const estaConectado = sessionStorage.getItem('sb_conectado') === 'true';
+    
+    if (estaConectado) {
+      btn.textContent = 'Desconectar';
+      btn.className = 'btn btn-ghost btn-sm'; // Mantiene tus estilos originales cuando está conectado
+    } else {
+      btn.textContent = 'Conectar';
+      btn.className = 'btn btn-primary btn-sm'; // Mantiene tus estilos originales cuando está desconectado
+    }
+
+    // 2. Controlar el click guardando el nuevo estado
+    btn.addEventListener('click', () => {
+      const actualmenteConectado = sessionStorage.getItem('sb_conectado') === 'true';
+      const nuevoEstado = !actualmenteConectado;
+
+      // Guardar en la sesión del navegador
+      sessionStorage.setItem('sb_conectado', nuevoEstado.toString());
+
+      // Actualizar la interfaz
+      if (nuevoEstado) {
+        btn.textContent = 'Desconectar';
+        btn.className = 'btn btn-ghost btn-sm';
+      } else {
+        btn.textContent = 'Conectar';
+        btn.className = 'btn btn-primary btn-sm';
+      }
+    });
+  }
+</script>

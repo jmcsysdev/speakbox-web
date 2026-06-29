@@ -1,0 +1,146 @@
+---
+// src/layouts/BaseLayout.astro
+const { title = "SpeakBox", activePage = "" } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title} — SpeakBox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/global.css" />
+</head>
+<body>
+
+<!-- ══ NAV PRINCIPAL ══════════════════════════════════════════ -->
+<nav class="nav">
+  <a class="nav-brand" href="/dashboard">SpeakBox</a>
+  <ul class="nav-links">
+
+    <li>
+      <a href="/dashboard" class={activePage === "dashboard" ? "active" : ""}>
+        Dashboard
+      </a>
+    </li>
+
+    <li>
+      <a href="/dispositivo" class={activePage === "dispositivo" ? "active" : ""}>
+        Dispositivo <span class="nav-chevron">▾</span>
+      </a>
+      <div class="dropdown">
+        <div class="dropdown-label">Telemetría</div>
+        <a href="/dispositivo#estado">Estado en vivo</a>
+        <a href="/dispositivo#bateria">Batería</a>
+        <a href="/dispositivo#sensores">Sensores</a>
+      </div>
+    </li>
+
+    <li>
+      <a href="/sesiones" class={activePage === "sesiones" ? "active" : ""}>
+        Historial <span class="nav-chevron">▾</span>
+      </a>
+      <div class="dropdown">
+        <div class="dropdown-label">Filtrar por modo</div>
+        <a href="/sesiones">Todas las sesiones</a>
+        <a href="/sesiones?modo=feynman">Feynman</a>
+        <a href="/sesiones?modo=pomodoro">Pomodoro</a>
+        <a href="/sesiones?modo=respiracion">Respiración</a>
+        <div class="dropdown-sep"></div>
+        <a href="/sesiones?export=csv">Exportar CSV</a>
+      </div>
+    </li>
+
+    <!-- Vista Docente: aparece solo tras hacer login como docente -->
+    <li id="nav-docente-li" style="display:none">
+      <a href="/docente" class={activePage === "docente" ? "active" : ""}>
+        Vista Docente <span class="nav-chevron">▾</span>
+      </a>
+      <div class="dropdown">
+        <div class="dropdown-label">Panel</div>
+        <a href="/docente">Mis alumnos</a>
+        <a href="/docente#comparativa">Comparativa semanal</a>
+        <a href="/docente#alertas">Alertas de batería</a>
+      </div>
+    </li>
+
+  </ul>
+  <div class="nav-right">
+    <span class="nav-role-badge" id="role-badge">Estudiante</span>
+    <a href="/cuenta" class="btn btn-ghost btn-sm">Mi cuenta</a>
+    <button class="btn btn-primary btn-sm" id="connect-btn" onclick="toggleConnect()">
+      Conectar
+    </button>
+  </div>
+</nav>
+
+<!-- ══ CONTENIDO DE CADA PÁGINA (Astro inyecta aquí) ══════════ -->
+<slot />
+
+<!-- ══ MODAL DETALLE SESIÓN (global, se usa en dashboard y sesiones) ══ -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3 id="modal-title"></h3>
+        <p style="font-size:12px;color:var(--tx3);margin-top:4px" id="modal-meta"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>Nivel de comprensión</label>
+        <span class="nivel-badge" id="modal-nivel"></span>
+      </div>
+      <div class="modal-field">
+        <label>Lo que explicaste</label>
+        <div class="transcript-box" id="modal-transcript"></div>
+      </div>
+      <div class="modal-field">
+        <label>Respuesta del SpeakBox</label>
+        <p id="modal-resp"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ JS GLOBAL (funciones compartidas por todas las páginas) ═ -->
+<script>
+  // Conectar / desconectar SpeakBox
+  function toggleConnect() {
+    const btn = document.getElementById('connect-btn');
+    const on = btn.textContent.trim() === 'Conectar';
+    btn.textContent = on ? 'Desconectar' : 'Conectar';
+    btn.className = on ? 'btn btn-ghost btn-sm' : 'btn btn-primary btn-sm';
+  }
+
+  // Abrir modal con datos de una sesión
+  function openModal(tema, modo, fecha, dur, nivel, transcript, resp) {
+    document.getElementById('modal-title').textContent = tema;
+    const modoLabel = { feynman:'Feynman 🧠', pomodoro:'Pomodoro 🍅', respiracion:'Respiración 🌬️' };
+    document.getElementById('modal-meta').textContent = `${modoLabel[modo] || modo} · ${dur} · ${fecha}`;
+    const nb = document.getElementById('modal-nivel');
+    nb.textContent = nivel;
+    const n = parseFloat(nivel);
+    nb.className = 'nivel-badge ' + (isNaN(n) ? 'nivel-medio' : n >= 7 ? 'nivel-alto' : n >= 5 ? 'nivel-medio' : 'nivel-bajo');
+    document.getElementById('modal-transcript').textContent = transcript;
+    document.getElementById('modal-resp').textContent = resp;
+    document.getElementById('modal').classList.add('open');
+  }
+
+  // Cerrar modal
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+
+  // Mostrar/ocultar nav de docente (se llama desde /cuenta tras login)
+  function mostrarNavDocente() {
+    document.getElementById('nav-docente-li').style.display = '';
+    document.getElementById('role-badge').textContent = 'Docente';
+  }
+</script>
+
+</body>
+</html>

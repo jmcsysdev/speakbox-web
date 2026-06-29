@@ -1,0 +1,119 @@
+---
+// src/pages/cuenta.astro
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Mi cuenta" activePage="cuenta">
+
+  <div class="page-wrap no-sub">
+    <div class="auth-wrap">
+      <div class="auth-card">
+
+        <div class="auth-card-head">
+          <h2>Mi cuenta</h2>
+          <p>Accede o crea tu perfil SpeakBox</p>
+        </div>
+
+        <div class="auth-card-body">
+
+          <!-- Tabs login / registro -->
+          <div class="auth-tabs" style="display: flex; gap: 20px; border-bottom: 1px solid var(--ln); margin-bottom: 20px;">
+            <div class="auth-tab active" id="tab-login" style="cursor: pointer; padding: 10px 0;" onclick="switchTab('login')">
+              Iniciar sesión
+            </div>
+            <div class="auth-tab" id="tab-registro" style="cursor: pointer; padding: 10px 0;" onclick="switchTab('registro')">
+              Registrarse
+            </div>
+          </div>
+
+          <!-- ══ FORMULARIO LOGIN ═══════════════════════════════════ -->
+          <div id="form-login" style="display: block;">
+            <div id="login-error" class="alert alert-err" style="display:none; padding: 10px; background: #fee; color: #c00; margin-bottom: 10px;">
+              <span id="login-error-msg">Correo o contraseña incorrectos.</span>
+            </div>
+            <div class="form-field" style="margin-bottom: 15px;">
+              <label>Correo institucional</label>
+              <input type="email" id="login-email" placeholder="20200012@unmsm.edu.pe" style="width: 100%; padding: 8px;" />
+            </div>
+            <div class="form-field" style="margin-bottom: 15px;">
+              <label>Contraseña</label>
+              <input type="password" id="login-pass" placeholder="••••••••" style="width: 100%; padding: 8px;" />
+            </div>
+            <button class="btn btn-primary btn-full" onclick="doLogin()" style="width: 100%; padding: 10px; cursor: pointer;">Ingresar</button>
+          </div>
+
+          <!-- ══ FORMULARIO REGISTRO ════════════════════════════════ -->
+          <div id="form-registro" style="display: none;">
+            <div id="reg-error" class="alert alert-err" style="display:none; padding: 10px; background: #fee; color: #c00; margin-bottom: 10px;">
+              <span id="reg-error-msg">Por favor completa todos los campos.</span>
+            </div>
+
+            <div class="form-field" style="margin-bottom: 15px;">
+              <label>Nombre completo</label>
+              <input type="text" id="reg-nombre" placeholder="Ana García Torres" style="width: 100%; padding: 8px;" />
+            </div>
+            <div class="form-field" style="margin-bottom: 15px;">
+              <label>Correo institucional</label>
+              <input type="email" id="reg-email" placeholder="20200012@unmsm.edu.pe" style="width: 100%; padding: 8px;" />
+            </div>
+            <div class="form-field" style="margin-bottom: 15px;">
+              <label>Contraseña</label>
+              <input type="password" id="reg-pass" placeholder="Mínimo 8 caracteres" style="width: 100%; padding: 8px;" />
+            </div>
+
+            <button class="btn btn-primary btn-full" onclick="doRegistro()" style="width: 100%; padding: 10px; cursor: pointer;">Crear cuenta</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</BaseLayout>
+
+<script is:inline>
+  // Función para alternar pestañas
+  function switchTab(tab) {
+    const loginForm = document.getElementById('form-login');
+    const regForm = document.getElementById('form-registro');
+    const tabLogin = document.getElementById('tab-login');
+    const tabReg = document.getElementById('tab-registro');
+
+    if (tab === 'login') {
+      loginForm.style.display = 'block';
+      regForm.style.display = 'none';
+      tabLogin.style.borderBottom = '2px solid var(--gr)';
+      tabReg.style.borderBottom = 'none';
+    } else {
+      loginForm.style.display = 'none';
+      regForm.style.display = 'block';
+      tabLogin.style.borderBottom = 'none';
+      tabReg.style.borderBottom = '2px solid var(--gr)';
+    }
+  }
+
+  // Lógica Login
+  async function doLogin() {
+    const email = document.getElementById('login-email').value;
+    const pass = document.getElementById('login-pass').value;
+    if (!email || !pass) {
+      document.getElementById('login-error').style.display = 'block';
+      return;
+    }
+    sessionStorage.setItem('sb_nombre', email.split('@')[0]);
+    window.location.href = '/dashboard';
+  }
+
+  // Lógica Registro
+  async function doRegistro() {
+    const nombre = document.getElementById('reg-nombre').value;
+    const email = document.getElementById('reg-email').value;
+    const pass = document.getElementById('reg-pass').value;
+    if (!nombre || !email || !pass) {
+      document.getElementById('reg-error').style.display = 'block';
+      return;
+    }
+    sessionStorage.setItem('sb_nombre', nombre.split(' ')[0]);
+    window.location.href = '/dashboard';
+  }
+</script>
