@@ -100,6 +100,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       document.getElementById('login-error').style.display = 'block';
       return;
     }
+    // Guarda el email para recuperar el nombre desde el backend
+    sessionStorage.setItem('sb_email', email);
+    // Nombre temporal mientras carga (parte antes del @)
     sessionStorage.setItem('sb_nombre', email.split('@')[0]);
     window.location.href = '/dashboard';
   }
@@ -113,7 +116,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       document.getElementById('reg-error').style.display = 'block';
       return;
     }
-    sessionStorage.setItem('sb_nombre', nombre.split(' ')[0]);
+    // Guarda el nombre COMPLETO (ej: "Ana García")
+    sessionStorage.setItem('sb_nombre', nombre);
+    sessionStorage.setItem('sb_email', email);
     window.location.href = '/dashboard';
   }
 </script>
