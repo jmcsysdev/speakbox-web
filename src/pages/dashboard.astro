@@ -2,11 +2,11 @@
 // src/pages/dashboard.astro
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
-
+ 
 <BaseLayout title="Dashboard" activePage="dashboard">
-
+ 
   <div class="page-wrap no-sub">
-
+ 
     <div class="dash-hero">
       <div class="container">
         <div class="dash-hero-inner">
@@ -25,9 +25,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
       </div>
     </div>
-
+ 
     <div class="container">
-
+ 
       <div class="mode-cards">
         <a href="/sesiones?modo=feynman" class="mode-card" style="text-decoration:none;color:inherit">
           <div class="mode-card-icon">🧠</div>
@@ -57,13 +57,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </div>
         </a>
       </div>
-
+ 
       <div class="chart-section">
         <h2>Bloques Pomodoro esta semana</h2>
         <p class="sub">Cada barra = bloques de 25 min completados</p>
         <div class="bar-chart" id="bar-chart-pomodoro"></div>
       </div>
-
+ 
       <div class="recientes">
         <h2>Sesiones recientes</h2>
         <div class="mini-tabla" id="tabla-recientes"></div>
@@ -72,7 +72,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
       </div>
     </div>
-
+ 
     <footer class="footer">
       <div class="container footer-inner">
         <span class="footer-brand">SpeakBox</span>
@@ -80,7 +80,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </div>
     </footer>
   </div>
-
+ 
   <div class="modal-overlay" id="modal-dash" onclick="if(event.target===this)cerrarModal()">
     <div class="modal">
       <div class="modal-head">
@@ -102,18 +102,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </div>
     </div>
   </div>
-
+ 
 </BaseLayout>
-
+ 
 <script>
   const API_BASE = "https://speakbox-backend-production.up.railway.app";
-
+ 
+  // Si no inició sesión, redirigir al login
+  const sbUserId   = sessionStorage.getItem('sb_user_id');
+  const sbUsername = sessionStorage.getItem('sb_username');
+  if (!sbUserId) {
+    window.location.href = '/cuenta';
+  } else {
+    document.getElementById('saludo-nombre').textContent = sbUsername;
+  }
+ 
   async function cargarDatos() {
     try {
-      const res = await fetch(`${API_BASE}/api/sesiones`);
+      const res = await fetch(`${API_BASE}/api/sesiones?user_id=${sbUserId}`);
       const data = await res.json();
       const sesiones = data.sesiones || [];
-
+ 
       // 1. Actualizar Tarjetas (Feynman, Pomodoro, Respiración)
       const fey = sesiones.filter(s => s.modo === 'feynman');
       const pom = sesiones.filter(s => s.modo === 'pomodoro');
@@ -126,12 +135,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       if (sesiones.length > 0) {
         document.getElementById('resumen-texto').textContent = `Esta semana llevas ${fey.length} sesiones Feynman y ${pom.length} bloques Pomodoro.`;
       }
-
+ 
       // Calcular tiempo total Pomodoro
       const totalSeg = pom.reduce((acc, s) => acc + (s.duracion_seg || 0), 0);
       const mins = Math.floor(totalSeg / 60);
       document.getElementById('stat-pomodoro-time').textContent = `${mins} min`;
-
+ 
       // 2. Renderizar Tabla
       const tabla = document.getElementById('tabla-recientes');
       if (sesiones.length > 0) {
@@ -148,7 +157,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       } else {
         tabla.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--tx3); font-size: 13px;">No hay sesiones recientes.</div>';
       }
-
+ 
       // 3. Renderizar Gráfico
       const cont = document.getElementById('bar-chart-pomodoro');
       cont.innerHTML = `
@@ -157,7 +166,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <span class="bar-lbl">Total</span>
         </div>
       `;
-
+ 
       // 4. Estado conexión
       const resEst = await fetch(`${API_BASE}/api/estado`);
       const est = await resEst.json();
@@ -166,10 +175,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       } else {
         document.getElementById('estado-conexion').textContent = `Esperando conexión...`;
       }
-
+ 
     } catch (e) { console.error("Error cargando dashboard:", e); }
   }
-
+ 
   window.abrirModal = (s) => {
     document.getElementById('modal-titulo').textContent = s.modo;
     document.getElementById('modal-meta').textContent = s.fecha;
@@ -177,16 +186,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     document.getElementById('modal-resp').textContent = s.respuesta_ia;
     document.getElementById('modal-dash').classList.add('open');
   };
-
+ 
   window.cerrarModal = () => document.getElementById('modal-dash').classList.remove('open');
-
+ 
   document.getElementById('fecha-actual').textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
-
-  // Mostrar el nombre guardado al registrarse o iniciar sesión
-  const nombre = sessionStorage.getItem('sb_nombre');
-  if (nombre) {
-    document.getElementById('saludo-nombre').textContent = nombre;
-  }
-
   cargarDatos();
 </script>
